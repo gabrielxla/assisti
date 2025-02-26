@@ -1,5 +1,7 @@
-const { app, BrowserWindow, nativeTheme, Menu} = require('electron')
+const { app, BrowserWindow, nativeTheme, Menu, ipcMain} = require('electron')
 
+const path = require('node:path')
+//janela main
 let win
 
 const createWindow = () => {
@@ -9,6 +11,9 @@ const createWindow = () => {
     height: 768,
    // minimizable: false,
     //resizable:false,
+    webPreferences: {
+      preload: path.join(__dirname,'preload.js')
+    }
     
    
   })
@@ -16,6 +21,15 @@ const createWindow = () => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
   
   win.loadFile('./src/views/index.html')
+  win.center()
+  // recebimento dos pedido do renderizador
+  ipcMain.on('client-window', () => {
+    clientWindow ()
+  })
+   // recebimento dos pedido do renderizador
+   ipcMain.on('os-window', () => {
+    osWindow ()
+  })
 }
 // Janela Sobre
 function aboutWindow(){
@@ -34,8 +48,48 @@ function aboutWindow(){
     })
   }
   about.loadFile('./src/views/sobre.html')
+  about.center()
+  
 }
 //fim da janela sobre
+// janela cliente
+let client
+function clientWindow() {
+  nativeTheme.themeSource = 'dark'
+  const main = BrowserWindow.getFocusedWindow()
+  if (main) {
+    client =  new BrowserWindow({
+      width: 1010,
+      height:720,
+      resizable: false,
+      modal:true,
+      minimizable:false,
+      parent:main
+    })
+
+}
+client.loadFile('./src/views/cliente.html')
+client.center()
+}
+// janela OS
+let os
+function osWindow() {
+  nativeTheme.themeSource = 'dark'
+  const main = BrowserWindow.getFocusedWindow()
+  if (main) {
+    os =  new BrowserWindow({
+      width: 1010,
+      height:720,
+      resizable: false,
+      modal:true,
+      minimizable:false,
+      parent:main
+    })
+
+}
+os.loadFile('./src/views/os.html')
+os.center()
+}
 // inicia a aplicação
 app.whenReady().then(() => {
     createWindow()
@@ -59,10 +113,11 @@ app.whenReady().then(() => {
 const  template = [
   {
      label: 'Cadastro',
-     submenu: [{label: 'Clientes'},{label:'OS'},{type:'separator'},{label:'Sair', click: () => app.quit(), accelerator:'Alt+F4'}]
+     submenu: [{label: 'Clientes', click: () => clientWindow ()},{label:'OS', click: () => osWindow ()},{type:'separator'},{label:'Sair', click: () => app.quit(), accelerator:'Alt+F4'}]
   },
   {
-      label: 'Relatorios'
+      label: 'Relatorios',
+      submenu: [{label: 'Clientes'},{label:'OS abertas'},{label:'OS concluidas'}]
   },
   {
       label: 'Ferramentas',
